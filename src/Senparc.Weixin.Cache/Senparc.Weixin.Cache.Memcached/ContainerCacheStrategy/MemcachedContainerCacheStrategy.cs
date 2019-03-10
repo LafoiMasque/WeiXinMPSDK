@@ -1,5 +1,5 @@
 ﻿/*----------------------------------------------------------------
-    Copyright (C) 2018 Senparc
+    Copyright (C) 2019 Senparc
 
     文件名：MemcachedContainerStrategy.cs
     文件功能描述：Memcached 容器缓存策略。
@@ -88,13 +88,13 @@ namespace Senparc.Weixin.Cache.Memcached
             throw new NotImplementedException();
         }
 
-        public override void UpdateContainerBag(string key, IBaseContainerBag containerBag, bool isFullKey = false)
+        public override void UpdateContainerBag(string key, IBaseContainerBag containerBag, TimeSpan? expiry = null, bool isFullKey = false)
         {
             var baseCacheStrategy = BaseCacheStrategy();
             object value;
             if ((baseCacheStrategy as MemcachedObjectCacheStrategy).TryGet(key, out value))
             {
-                baseCacheStrategy.Update(key, containerBag, true);
+                baseCacheStrategy.Update(key, containerBag, expiry, isFullKey);
             }
         }
 

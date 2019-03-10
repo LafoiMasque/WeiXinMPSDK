@@ -1,7 +1,7 @@
 ﻿#region Apache License Version 2.0
 /*----------------------------------------------------------------
 
-Copyright 2018 Jeffrey Su & Suzhou Senparc Network Technology Co.,Ltd.
+Copyright 2019 Jeffrey Su & Suzhou Senparc Network Technology Co.,Ltd.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 except in compliance with the License. You may obtain a copy of the License at
@@ -20,7 +20,7 @@ Detail: https://github.com/JeffreySu/WeiXinMPSDK/blob/master/license.md
 
 
 /*----------------------------------------------------------------
-    Copyright (C) 2018 Senparc
+    Copyright (C) 2019 Senparc
 
     文件名：SessionContainer.cs
     文件功能描述：小程序 Session 容器
@@ -34,6 +34,9 @@ Detail: https://github.com/JeffreySu/WeiXinMPSDK/blob/master/license.md
     修改标识：Senparc - 20180701
     修改描述：V2.0.3 SessionBag 添加 UnionId 属性
 
+    修改标识：Senparc - 20170522
+    修改描述：v3.3.2 修改 DateTime 为 DateTimeOffset
+
 ----------------------------------------------------------------*/
 
 
@@ -44,6 +47,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Senparc.CO2NET.CacheUtility;
 using Senparc.Weixin.Containers;
+using Senparc.Weixin.Utilities.WeixinUtility;
 using Senparc.Weixin.WxOpen.Helpers;
 
 namespace Senparc.Weixin.WxOpen.Containers
@@ -98,7 +102,7 @@ namespace Senparc.Weixin.WxOpen.Containers
         /// <summary>
         /// 过期时间
         /// </summary>
-        public DateTime ExpireTime { get; set; }
+        public DateTimeOffset ExpireTime { get; set; }
         //        {
         //            get { return _expireTime; }
         //#if NET35 || NET40
@@ -111,7 +115,7 @@ namespace Senparc.Weixin.WxOpen.Containers
         //private string _key;
         //private string _openId;
         //private string _sessionKey;
-        //private DateTime _expireTime;
+        //private DateTimeOffset _expireTime;
 
         /// <summary>
         /// ComponentBag
@@ -131,9 +135,9 @@ namespace Senparc.Weixin.WxOpen.Containers
         /// 获取最新的过期时间
         /// </summary>
         /// <returns></returns>
-        private static DateTime GetExpireTime()
+        private static TimeSpan GetExpireTime()
         {
-            return DateTime.Now.AddDays(2);//有效期2天
+            return TimeSpan.FromDays(2);//有效期2天
         }
 
         #region 同步方法
@@ -151,7 +155,7 @@ namespace Senparc.Weixin.WxOpen.Containers
                 return null;
             }
 
-            if (bag.ExpireTime < DateTime.Now)
+            if (bag.ExpireTime < SystemTime.Now)
             {
                 //已经过期
                 Cache.RemoveFromCache(key);
@@ -160,8 +164,8 @@ namespace Senparc.Weixin.WxOpen.Containers
 
             //using (FlushCache.CreateInstance())
             //{
-            bag.ExpireTime = GetExpireTime();//滚动过期时间
-            Update(key, bag);
+            bag.ExpireTime = SystemTime.Now.Add(GetExpireTime());//滚动过期时间
+            Update(key, bag, GetExpireTime());
             //}
             return bag;
         }
@@ -174,7 +178,7 @@ namespace Senparc.Weixin.WxOpen.Containers
         /// <param name="sessionKey">SessionKey</param>
         /// <param name="uniondId">UnionId</param>
         /// <returns></returns>
-        public static SessionBag UpdateSession(string key, string openId, string sessionKey,string uniondId)
+        public static SessionBag UpdateSession(string key, string openId, string sessionKey, string uniondId)
         {
             key = key ?? SessionHelper.GetNewThirdSessionName();
 
@@ -186,9 +190,9 @@ namespace Senparc.Weixin.WxOpen.Containers
                 OpenId = openId,
                 UnionId = uniondId,
                 SessionKey = sessionKey,
-                ExpireTime = GetExpireTime()
+                ExpireTime = SystemTime.Now.Add(GetExpireTime())
             };
-            Update(key, sessionBag);
+            Update(key, sessionBag, GetExpireTime());
             return sessionBag;
             //}
         }
